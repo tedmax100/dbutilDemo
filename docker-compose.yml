@@ -1,0 +1,48 @@
+version: "3"
+services:
+  master1:
+    image: mysql:${TAG}
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${ROOT_PASSWORD}
+      - MYSQL_ROOT_HOST=%
+      - MYSQL_DATABASE=lottery
+      - MYSQL_USER=${USER}
+      - MYSQL_PASSWORD=${PASSWORD}
+      - MYSQL_HOST=%
+    ports:
+      - "3306"
+    networks:
+      db:
+        ipv4_address: 172.31.1.11
+    volumes:
+      - ./db.cnf:/etc/mysql/conf.d/mysqld.cnf
+      - master1-data:/var/lib/mysql   
+  master2:
+    image: mysql:${TAG}
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${ROOT_PASSWORD}
+      - MYSQL_ROOT_HOST=%
+      - MYSQL_DATABASE=lottery
+      - MYSQL_USER=${USER}
+      - MYSQL_PASSWORD=${PASSWORD}
+      - MYSQL_HOST=%
+    ports:
+      - "3306"
+    networks:
+      db:
+        ipv4_address: 172.31.1.12
+    volumes:
+      - ./db.cnf:/etc/mysql/conf.d/mysqld.cnf
+      - master2-data:/var/lib/mysql   
+networks:
+  db:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.1.0/24
+ 
+volumes:
+  master1-data:
+  master2-data:

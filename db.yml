@@ -1,0 +1,76 @@
+# 分庫分表規則， 最多0版， id：0-7， 默認0
+database:
+  dsn: db_user:root_pwd@tcp(172.31.1.11:3306)/lottery
+  passwd: 
+versions: 
+- version: 0
+  rules:
+    # 數據庫負載， 平均輪詢負載，最多16個庫
+    databases: 
+      - dsn: db_user:{passwd}@tcp(172.31.1.11:3306)/lottery
+        #db登入密碼密文，默認是明文不加密， db套件有設定密鑰再做解密處理
+        passwd: xxsdfsdfsdfasd
+    # 表設定
+    tables:  
+- version: 1
+    # 不可變的設定hash值，為空不做檢測，默認為空
+  # checksum: 
+  rules:
+    # 數據庫負載， 平均輪詢負載，最多16個庫
+    databases: 
+      - dsn: db_user:{passwd}@tcp(172.31.1.11:3306)/lottery
+        #db登入密碼密文，默認是明文不加密， db套件有設定密鑰再做解密處理
+        passwd: xxsdfsdfsdfasd
+      - dsn: db_user:{passwd}@tcp(172.31.1.12:3306)/lottery
+        passwd: xxsdfsdfsdfasd
+    # 表設定
+    tables:
+      # 流水表
+      # 表名
+      - name: tran
+        # 主鍵， 默認id
+        key: id
+        # 時區字串，比如 Asia/Taipei  默認 Etc/UTC， https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+        timeZone: ""
+        # 業務分類表映射，目標最多8個表，id為0-7， 支持同版本新增tag
+        tags:
+          # 業務映射 表1
+          # 業務編碼: 入款 ，設定後同版本不可變
+        - id: 0
+          # 映射表， 設定後不可變
+          names: 
+          - deposit
+          # 平均負載表數量: 5表， 支持同版本增加數量
+          amount: 5
+          # 按時間分表， day：按時間天 20191001， month： 按月 201910， year： 按年 2019， week： 按一年第幾周 01/50，  year_day: 一年第幾天  001/300
+          # 設定後不可變
+          date: month 
+        # 業務編碼: 出款
+        - id: 1
+          # 映射表， 索引1， 設定後不可變
+          names: 
+          - withdtraw
+          # 平均負載表數量: 5表
+          amount: 5
+          date: month 
+      # 訂單表分表規則
+      - name: order
+        key: id
+        timeZone: ""
+        tags:
+          # 彩票訂單
+        - id: 1
+          names: 
+          - cp
+          amount: 5
+          date: month
+        #- name: mg
+        - id: 2
+          names: 
+          - ag
+          - mg
+          amount: 5
+          date: month
+     
+
+
