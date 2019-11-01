@@ -1,3 +1,5 @@
+USE lottery;
+
 CREATE TABLE `tran` (
   `id` bigint(20) unsigned NOT NULL,
   `user_id` bigint(20) unsigned NOT NULL,

@@ -10,6 +10,8 @@ services:
       - MYSQL_USER=${USER}
       - MYSQL_PASSWORD=${PASSWORD}
       - MYSQL_HOST=%
+    security_opt: 
+      - seccomp:unconfined
     ports:
       - "3306"
     networks:
@@ -17,7 +19,21 @@ services:
         ipv4_address: 172.31.1.11
     volumes:
       - ./db.cnf:/etc/mysql/conf.d/mysqld.cnf
-      - master1-data:/var/lib/mysql   
+      - master1-data:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
+    command: [
+      "--default-authentication-plugin=mysql_native_password"
+    ]
+    logging:
+      driver: "json-file"
+      options: 
+        max-size: "10m"
+        max-file: "10"
+    ulimits:
+      nproc: 5000
+      nofile:
+        soft: 15000
+        hard: 30000
   master2:
     image: mysql:${TAG}
     restart: unless-stopped
@@ -28,6 +44,8 @@ services:
       - MYSQL_USER=${USER}
       - MYSQL_PASSWORD=${PASSWORD}
       - MYSQL_HOST=%
+    security_opt: 
+      - seccomp:unconfined
     ports:
       - "3306"
     networks:
@@ -35,7 +53,21 @@ services:
         ipv4_address: 172.31.1.12
     volumes:
       - ./db.cnf:/etc/mysql/conf.d/mysqld.cnf
-      - master2-data:/var/lib/mysql   
+      - master2-data:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
+    command: [
+      "--default-authentication-plugin=mysql_native_password"
+    ]
+    logging:
+      driver: "json-file"
+      options: 
+        max-size: "10m"
+        max-file: "10"
+    ulimits:
+      nproc: 5000
+      nofile:
+        soft: 15000
+        hard: 30000
 networks:
   db:
     driver: bridge

@@ -1,3 +1,5 @@
+USE lottery;
+
 CREATE TABLE `order` (
   `id` bigint(20) unsigned NOT NULL,
   `user_id` bigint(20) unsigned NOT NULL,
