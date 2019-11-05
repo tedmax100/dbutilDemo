@@ -51,43 +51,74 @@ func main() {
 		Name:    StringWithCharset(),
 		Balance: 1000,
 	}
-	insertCom := dbCtx.NewCommand(cancelCtx)
-	_, err := insertCom.For("user").Insert("id", user.ID).Insert("name", user.Name).Insert("balance", user.Balance).Exec()
+	users := []User{
+		/* 		ID:      time.Now().UnixNano() / 1000 / 1000 / 1000,
+		   		Name:    StringWithCharset(),
+		   		Balance: 1000, */
+	}
 
+	insertComPR := dbCtx.NewCommand(cancelCtx)
+	insertComPR.For("user").RawSQL("select * from user")
+	err := dbCtx.Begin(insertComPR)
+	insertComPR.Find(&users)
+
+	dbCtxPR2 := dbClient.Open(cancelCtx)
+	insertComPR2 := dbCtxPR2.NewCommand(cancelCtx)
+	insertComPR2.For("user").Insert("id", 14).Insert("name", "cc").Insert("balance", 500)
+	err = dbCtxPR2.Begin(insertComPR2)
+	_, err = insertComPR2.Exec()
+	if err != nil {
+		fmt.Println(err)
+	}
+	users = []User{}
+	insertComPR.Find(&users)
+	fmt.Println(len(users))
+	dbCtxPR2.Commit()
+	users = []User{}
+	insertComPR.Find(&users)
+	fmt.Println(len(users))
+	// insertComPR3 := dbCtx.NewCommand(cancelCtx)
+	insertComPR.For("user").Insert("id", 14).Insert("name", "dd").Insert("balance", 400)
+	_, err = insertComPR.Exec()
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = dbCtx.Commit()
+	if err != nil {
+		fmt.Println(err)
+	}
+	insertCom := dbCtx.NewCommand(cancelCtx)
+	insertCom.For("user").RawSQL("select * from user")
+	err = dbCtx.Begin(insertCom)
+	insertCom.Find(&users)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(len(users))
+
+	dbCtx2 := dbClient.Open(cancelCtx)
+	insertCom2 := dbCtx2.NewCommand(cancelCtx)
+	insertCom2.For("user").Insert("id", user.ID).Insert("name", user.Name).Insert("balance", user.Balance)
+	err = dbCtx2.Begin(insertCom2)
+	_, err = insertCom2.Exec()
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	/* 	var wg sync.WaitGroup
-	   	for k:= 1 ; k < 100 ; k++ {
-	   		wg.Add(5)
-	   		for i := 0 ; i< 5; i ++ {
-	   			 go func() {
-	   				defer wg.Done()
-	   				tranId, err := dbClient.NewID(cancelCtx, "tran", "deposit")
-	   				if err != nil {
-	   					fmt.Println(err)
-	   				}
-	   				insertCom := dbCtx.NewCommand(cancelCtx)
+	users2 := []User{}
+	insertCom.Find(&users2)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(len(users2))
+	dbCtx2.Commit()
 
-	   				tran := Tran{
-	   					ID : tranId,
-	   					UserID: user.ID,
-	   					Amount: int(rand.Intn((100-6) + 6)),
-	   					Type : 1,
-	   					Time : time.Now().UnixNano() / 1000 / 1000/ 1000,
-	   				}
+	_, err = insertCom.For("user").Insert("id", user.ID).Insert("name", user.Name).Insert("balance", user.Balance).Exec()
 
-	   				_, err = insertCom.For("tran").Insert("id", tran.ID).Insert("user_id", tran.UserID).Insert("amount", tran.Amount).Insert("type", tran.Type).Insert("time", tran.Time).Exec()
-	   				if err != nil {
-	   					fmt.Println(err)
-	   				}
-	   			 }()
-	   			}
-	   		wg.Wait()
-	   		 time.Sleep(10 * time.Millisecond)
-	   	} */
-
+	/* 	if err != nil {
+	   		fmt.Println(err)
+	   	}
+	*/
 	var tranID int64
 	tranID, err = dbClient.NewID(cancelCtx, "tran", "deposit")
 	if err != nil {
