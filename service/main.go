@@ -32,8 +32,12 @@ type User struct {
 	Balance int
 }
 
+type Base struct {
+	ID int64 `sql:"id"`
+}
 type Tran struct {
-	ID     int64 `sql:"id"`
+	//ID     int64
+	Base
 	UserID int64 `sql:"user_id"`
 	Amount int
 	Type   uint
@@ -64,7 +68,7 @@ func main() {
 
 	dbCtxPR2 := dbClient.Open(cancelCtx)
 	insertComPR2 := dbCtxPR2.NewCommand(cancelCtx)
-	insertComPR2.For("user").Insert("id", 14).Insert("name", "cc").Insert("balance", 500)
+	insertComPR2.For("user").Insert("id", 21).Insert("name", "cc").Insert("balance", 500)
 	err = dbCtxPR2.Begin(insertComPR2)
 	_, err = insertComPR2.Exec()
 	if err != nil {
@@ -78,7 +82,7 @@ func main() {
 	insertComPR.Find(&users)
 	fmt.Println(len(users))
 	// insertComPR3 := dbCtx.NewCommand(cancelCtx)
-	insertComPR.For("user").Insert("id", 14).Insert("name", "dd").Insert("balance", 400)
+	insertComPR.For("user").Insert("id", 21).Insert("name", "dd").Insert("balance", 400)
 	_, err = insertComPR.Exec()
 	if err != nil {
 		fmt.Println(err)
@@ -127,7 +131,10 @@ func main() {
 	insertCom = dbCtx.NewCommand(cancelCtx)
 
 	tran := Tran{
-		ID:     tranID,
+		Base: Base{
+			ID: tranID,
+		},
+		//ID:     tranID,
 		UserID: user.ID,
 		Amount: int(rand.Intn((100 - 6) + 6)),
 		Type:   1,
@@ -160,7 +167,10 @@ func main() {
 			fmt.Println(err)
 		}
 		tran = Tran{
-			ID:     tranID,
+			Base: Base{
+				ID: tranID,
+			},
+			// ID:     tranID,
 			UserID: user.ID,
 			Amount: 550,
 			Type:   1,
