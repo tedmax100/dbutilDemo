@@ -1,49 +1,84 @@
-database:
-  dsn: db_user:pwd@tcp(172.31.1.11:3306)/lottery
-  passwd: 
+--- 
+database: 
+  dsn: "db_user:pwd@tcp(172.31.1.11:3306)/lottery"
+  passwd: ~
 versions: 
-- version: 0
-  rules:
-    databases: 
-      - dsn: db_user:pwd@tcp(172.31.1.11:3306)/lottery
-        passwd: 
-    tables:  
-- version: 1
-  rules:
-    databases: 
-      - dsn: db_user:pwd@tcp(172.31.1.11:3306)/lottery
-        passwd: 
-
-    tables:
-      - name: tran
-        key: id
-        timeZone: ""
-        tags:
-        - id: 0
-          names: 
-          - deposit
-          amount: 5
-          date: month 
-        - id: 1
-          names: 
-          - withdtraw
-          amount: 5
-          date: month 
-      - name: order
-        key: id
-        timeZone: ""
-        tags:
-        - id: 0
-          names: 
-          - cp
-          amount: 5
-          date: month
-        - id: 1
-          names: 
-          - ag
-          - mg
-          amount: 5
-          date: month
-     
-
-
+  - 
+    rules: 
+      databases: 
+        - 
+          dsn: "db_user:pwd@tcp(172.31.1.11:3306)/lottery"
+          passwd: ~
+      tables: ~
+    version: 0
+  - 
+    rules: 
+      databases: 
+        - 
+          dsn: "db_user:pwd@tcp(172.31.1.11:3306)/lottery"
+          passwd: ~
+      tables: 
+        - 
+          key: id
+          name: match
+          tags: 
+            - 
+              id: 0
+              names: 
+                - soccer
+            - 
+              id: 1
+              names: 
+                - basketball
+                - baseball
+          timeZone: ""
+        - 
+          key: id
+          name: odds
+          tags: 
+            - 
+              id: 0
+              names: 
+                - soccer
+            - 
+              id: 1
+              names: 
+                - basketball
+                - baseball
+          timezone: ""
+        - 
+          key: id
+          name: tran
+          tags: 
+            - 
+              amount: 5
+              date: month
+              id: 0
+              names: 
+                - deposit
+            - 
+              amount: 5
+              date: month
+              id: 1
+              names: 
+                - withdtraw
+          timeZone: ""
+        - 
+          key: id
+          name: order
+          tags: 
+            - 
+              amount: 5
+              date: month
+              id: 0
+              names: 
+                - cp
+            - 
+              amount: 5
+              date: month
+              id: 1
+              names: 
+                - ag
+                - mg
+          timeZone: ""
+    version: 1

@@ -44,12 +44,143 @@ type Tran struct {
 	Time   int64
 }
 
+type Sport struct {
+	ID   int64
+	Name string
+}
+
+type Match struct {
+	ID       int64
+	SportID  int64  `sql:"sport_id"`
+	HomeName string `sql:"home_name"`
+	AwayName string `sql:"away_name"`
+	Time     int64
+}
+
+type Odds struct {
+	ID          int64
+	MatchID     int64  `sql:"match_id"`
+	BetTypeName string `sql:"bet_type_name"`
+	Selection1  float64
+	Selection2  float64
+	Time        int64
+}
+
 func main() {
 	cancelCtx, _ := context.WithCancel(context.Background())
 	dbClient := db.NewDatabase(cancelCtx)
 
 	dbCtx := dbClient.Open(cancelCtx)
 
+	// 插入兩個同業務不同產品的match table, match有參與分表
+	soccerMatchID, _ := dbClient.NewID(cancelCtx, "match", "soccer")
+	fmt.Println("soccer match id :  ", soccerMatchID)
+	match01 := Match{
+		ID:       soccerMatchID,
+		SportID:  1,
+		HomeName: "Chelsea",
+		AwayName: "Arsenal",
+		Time:     time.Now().UnixNano() / 1000 / 1000 / 1000,
+	}
+	insertSoccerMatchCom := dbCtx.NewCommand(cancelCtx)
+	insertSoccerMatchCom.For("match").Insert("id", match01.ID).Insert("sport_id", match01.SportID).Insert("home_name", match01.HomeName).Insert("away_name", match01.AwayName).Insert("time", match01.Time)
+	_, err := insertSoccerMatchCom.Exec()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	basketballMatchID, _ := dbClient.NewID(cancelCtx, "match", "basketball")
+	fmt.Println("basketball match id : ", basketballMatchID)
+	match02 := Match{
+		SportID:  basketballMatchID,
+		HomeName: "Laker",
+		AwayName: "King",
+		Time:     time.Now().UnixNano() / 1000 / 1000 / 1000,
+	}
+	insertBasketballMatchCom := dbCtx.NewCommand(cancelCtx)
+	insertBasketballMatchCom.For("match").Insert("id", match02.ID).Insert("sport_id", match02.SportID).Insert("home_name", match02.HomeName).Insert("away_name", match02.AwayName).Insert("time", match02.Time)
+	_, err = insertBasketballMatchCom.Exec()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// select 單場 match
+	singleMatch := Match{}
+	singleMatchSelCom := dbCtx.NewQuery(cancelCtx)
+	singleMatchSelCom.For("match").SelectModel(&singleMatch).Where("id={id}", "id")
+	singleMatchSelCom.Vars(map[string]interface{}{"id": match01.ID})
+	err = singleMatchSelCom.Find(&singleMatch)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("singleMatch: %+v\n", singleMatch)
+
+	// select 運動列表
+	sportList := []Sport{}
+	sportListSelCom := dbCtx.NewQuery(cancelCtx)
+	err = sportListSelCom.For("sport").RawSQL("SELECT * FROM sport").Find(&sportList)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("sport list: %+v\n", sportList)
+
+	//  透過parent 的分片ID, 來生成同庫的其他業務分片ID
+	oddsiD, _ := dbClient.NewSubID(cancelCtx, "odds", "soccer", match01.ID)
+	odds := Odds{
+		ID:          oddsiD,
+		MatchID:     match01.ID,
+		BetTypeName: "hadicap",
+		Selection1:  1.95,
+		Selection2:  2.02,
+		Time:        time.Now().UnixNano() / 1000 / 1000 / 1000,
+	}
+	fmt.Printf("oddsid: %+v\n", odds)
+
+	// 啟動事物
+	soccerMatchID, _ = dbClient.NewID(cancelCtx, "match", "soccer")
+	fmt.Println("soccer match id :  ", soccerMatchID)
+
+	match01 = Match{
+		ID:       soccerMatchID,
+		SportID:  1,
+		HomeName: "Crystal",
+		AwayName: "Manchester City",
+		Time:     time.Now().UnixNano() / 1000 / 1000 / 1000,
+	}
+	insertSoccerMatchCom = dbCtx.NewCommand(cancelCtx)
+	insertSoccerMatchCom.For("match").Insert("id", match01.ID).Insert("sport_id", match01.SportID).Insert("home_name", match01.HomeName).Insert("away_name", match01.AwayName).Insert("time", match01.Time)
+	err = dbCtx.Begin(insertSoccerMatchCom)
+	if err != nil {
+		fmt.Println(err)
+	}
+	_, err = insertSoccerMatchCom.Exec()
+	if err != nil {
+		dbCtx.Rollback()
+		fmt.Println(err)
+	}
+
+	oddsiD, _ = dbClient.NewSubID(cancelCtx, "odds", "soccer", match01.ID)
+	odds = Odds{
+		ID:          oddsiD,
+		MatchID:     match01.ID,
+		BetTypeName: "over under",
+		Selection1:  1.88,
+		Selection2:  2.12,
+		Time:        time.Now().UnixNano() / 1000 / 1000 / 1000,
+	}
+
+	insertSoccerOddsCom := dbCtx.NewCommand(cancelCtx)
+	insertSoccerOddsCom.For("odds").Insert("id", odds.ID).Insert("match_id", odds.MatchID).Insert("bet_type_name", odds.BetTypeName).Insert("selection1", odds.Selection1).Insert("selection2", odds.Selection2).Insert("time", odds.Time)
+	_, err = insertSoccerOddsCom.Exec()
+	if err != nil {
+		// 因為odds表格不存在, 所以整個事物被回滾, 剛剛還沒commit的match insert操作也被回滾了
+		dbCtx.Rollback()
+		fmt.Println(err)
+	} else {
+		dbCtx.Commit()
+	}
+
+	// end
 	user := User{
 		ID:      time.Now().UnixNano() / 1000 / 1000 / 1000,
 		Name:    StringWithCharset(),
@@ -63,7 +194,7 @@ func main() {
 
 	insertComPR := dbCtx.NewCommand(cancelCtx)
 	insertComPR.For("user").RawSQL("select * from user")
-	err := dbCtx.Begin(insertComPR)
+	err = dbCtx.Begin(insertComPR)
 	insertComPR.Find(&users)
 
 	dbCtxPR2 := dbClient.Open(cancelCtx)
